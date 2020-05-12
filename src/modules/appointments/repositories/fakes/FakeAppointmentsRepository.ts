@@ -44,8 +44,8 @@ class AppointmentsRepository implements IAppointmentsRepository {
   }
 
   public async findByDate(date: Date): Promise<Appointment | undefined> {
-    const appointment = this.appointments.find((appointment) => {
-      return appointment.date === date;
+    const appointment = this.appointments.find((appoint) => {
+      return appoint.date === date;
     });
 
     return appointment;
@@ -53,10 +53,11 @@ class AppointmentsRepository implements IAppointmentsRepository {
 
   public async create({
     date,
+    user_id,
     provider_id,
   }: ICreateAppointmentDTO): Promise<Appointment> {
     const appointment = new Appointment();
-    Object.assign(appointment, { date, provider_id, id: uuid() });
+    Object.assign(appointment, { date, user_id, provider_id, id: uuid() });
     this.appointments.push(appointment);
 
     return appointment;
