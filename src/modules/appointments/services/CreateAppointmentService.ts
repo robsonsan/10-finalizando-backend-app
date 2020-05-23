@@ -5,6 +5,7 @@ import AppError from '@shared/errors/AppError';
 import Appointment from '@modules/appointments/infra/typeorm/entities/Appointment';
 import IAppointmentsRepository from '@modules/appointments/repositories/IAppointmentsRepository';
 import INotificationsRepository from '@modules/notifications/repositories/INotificationsRepository';
+import ICacheProvider from '@shared/container/providers/cacheProvider/models/ICacheProvider';
 
 interface IRequestDTO {
   provider_id: string;
@@ -20,6 +21,9 @@ class CreateAppointmentService {
 
     @inject('NotificationsRepository')
     private notificationsRepository: INotificationsRepository,
+
+    @inject('CacheProvider')
+    private cacheProvider: ICacheProvider,
   ) {}
 
   public static convertDate(date: string): Date {
@@ -45,7 +49,10 @@ class CreateAppointmentService {
       throw new AppError('you can create appointments on available time');
     }
 
-    const findAppointment = await this.appointmentsRepository.findByDate(date);
+    const findAppointment = await this.appointmentsRepository.findByDate(
+      date,
+      provider_id,
+    );
 
     if (findAppointment) {
       throw new AppError('This appointment is already booked!');
@@ -63,6 +70,15 @@ class CreateAppointmentService {
       recipient_id: provider_id,
       content: `Novo agendamente para dia ${dateFormated}`,
     });
+
+    console.log('invalidação');
+
+    await this.cacheProvider.invalidate(
+      `provider-appointments:${provider_id}:${format(
+        appointmentDate,
+        'yyyy-M-d',
+      )}`,
+    );
 
     return appointment;
   }
